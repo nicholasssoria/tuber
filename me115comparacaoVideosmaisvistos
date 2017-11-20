@@ -1,0 +1,42 @@
+"# Comparaçao dos vídeos mais vistos de cada canal - MARI"
+
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(readr)
+
+#Banco com os vídeos mais vistos de cada canal
+MaisVistos <- Videos[1, ]
+for (i in 1:79){
+  MaisVistos <- rbind(MaisVistos, Videos[1+5*i, ])
+}
+
+    #Gráfico Visualizações x Nome Do Canal com fill = Categoria (ficou meio colado)
+    MaisVistos %>% ggplot(aes(y = as.numeric(visualizacoes), x = nomeCanal, fill = categoria)) + geom_bar(stat = "identity") + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + ggtitle("Visualizações do video mais visto de cada canal") + labs(y = "Visualizações", x = "Canal")
+  
+    #Gráfico da relação views x comentários de cada vídeos dos mais vistos(meio indentificável)
+    MaisVistos %>% ggplot(aes(visualizacoes, comentarios)) + geom_point(aes(colour=factor(nomeCanal))) + geom_smooth(method="lm") + scale_x_log10() 
+
+#Banco agrupado por categoria dos mais vistos
+CategoriaMaisVistos <- MaisVistos %>% group_by(categoria) %>% summarise(viewsCategoriaMaisVistos = sum(as.numeric(visualizacoes)), comentariosCategoriaMaisVistos = sum(as.numeric(comentarios)), descurtidasCategoriaMaisVistos = sum(as.numeric(descurtidas)), curtidasCategoriaMaisVistos = sum(as.numeric(curtidas)), quantidadeDaCategoria = n(), taxaDeViews = viewsCategoriaMaisVistos/quantidadeDaCategoria, taxadeComentarios = comentariosCategoriaMaisVistos/quantidadeDaCategoria)
+
+    #Gráfico da relação views x comentários por categoria dos mais vistos em valor absoluto
+    CategoriaMaisVistos %>% ggplot(aes(x = comentariosCategoriaMaisVistos, y = viewsCategoriaMaisVistos, col = categoria)) + geom_point()
+    
+    #Gráfico da relação views x comentários por categoria dos mais vistos em valor absoluto em taxa
+    CategoriaMaisVistos %>% ggplot(aes(x = taxadeComentarios, y = taxaDeViews, col = categoria)) + geom_point()
+
+
+"#O TIPO DE CATEGORIA MAIS VISTA ESTÁ RELACIONADA AO PAÍS?" 
+# Acrescentando uma coluna com o país de cada vídeo
+pais <- c(rep("Estados Unidos", 50), rep("Alemanha", 50), rep("Reino Unido", 50), rep("França", 50), rep("Índia", 50), rep("Itália", 50), rep("Brasil", 50), rep("Canadá", 50))
+Videos <- cbind(Videos, pais)
+
+# Gráfico
+Videos %>% group_by(pais, categoria) %>% summarise(quantidade = n()) %>%
+ggplot(aes(x=categoria,y=quantidade,group=1,fill=categoria))+
+  facet_grid(pais~.,scales="free") +
+  geom_col(aes(y=quantidade))+
+  ggtitle(label="O tipo de categoria mais frequente varia de acordo com o país?")+
+  xlab("Categoria") +
+  ylab("Frequência") + theme(axis.text.x = element_text(angle = 15, hjust = 1))
